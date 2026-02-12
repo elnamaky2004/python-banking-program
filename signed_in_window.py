@@ -58,15 +58,11 @@ class window(QWidget):
 
         transfer_button = QPushButton("Transfer Money", self)
         account_info_button = QPushButton("Account Information", self)
-        request_money_button = QPushButton("Request Money", self)
-        request_loan_button = QPushButton("Request Loan", self)
         app_info_button = QPushButton("About app", self)
         update_button = QPushButton("Update info", self)
 
         transfer_button.clicked.connect(self.transfer_money)
         account_info_button.clicked.connect(self.account_information)
-        request_money_button.clicked.connect(self.request_money)
-        request_loan_button.clicked.connect(self.request_loan)
         app_info_button.clicked.connect(self.open_about_app)
         update_button.clicked.connect(self.update_info)
 
@@ -76,8 +72,6 @@ class window(QWidget):
         vbox.addWidget(options_label)
         vbox.addWidget(transfer_button)
         vbox.addWidget(account_info_button)
-        vbox.addWidget(request_money_button)
-        vbox.addWidget(request_loan_button)
         vbox.addWidget(update_button)
         vbox.addWidget(app_info_button)
 
@@ -94,11 +88,6 @@ class window(QWidget):
         self.next_window.show()
         self.hide()
 
-    def request_money(self):
-        pass
-
-    def request_loan(self):
-        pass
 
     def open_about_app(self):
         self.next_window = about_app.about_app(self)
