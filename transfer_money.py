@@ -103,18 +103,21 @@ class transfer_money(QWidget):
     def refresh_sender_info(self):
         users = self.load_users()
         sender = users.get(self.username, {})
+        currency = sender.get("currency", "N/A")
         self.sender_acc = str(sender.get("account_number", "")).strip()
         self.sender_balance = self.to_number(sender.get("account_balance", 0.0), 0.0)
 
         self.acc_info_label.setText(
             f"Your Account Number: {self.sender_acc}\n"
-            f"Your Account Balance: ${self.sender_balance:.2f}"
+            f"Your Account Balance: {self.sender_balance:.2f} {currency}"
         )
 
     def transfer_money(self):
         recipient_acc = self.transfer_to_text.text().strip()
         amount_text = self.amount_text.text().strip()
-
+        with open("users.json", "r") as f:
+            users = json.load(f)
+        currency = users.get(self.username, {}).get("currency", "N/A")    
         if not recipient_acc or not amount_text:
             QMessageBox.warning(self, "Missing Data", "Please enter recipient account number and amount.")
             return
@@ -155,7 +158,7 @@ class transfer_money(QWidget):
         reply = QMessageBox.question(
             self,
             "Confirm Transfer",
-            f"Transfer ${amount:.2f} to {recipient_acc}?",
+            f"Transfer {amount:.2f} {currency} to {recipient_acc}?",
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No
         )

@@ -51,7 +51,7 @@ class sign_up(QWidget):
         self.age_text.setPlaceholderText("Age")
 
         self.account_balance_text = QLineEdit(self)
-        self.account_balance_text.setPlaceholderText("Account Balance")
+        self.account_balance_text.setPlaceholderText("Account Balance in EGP")
 
         self.account_number_text = QLineEdit(self)
         self.account_number_text.setPlaceholderText("Account Number")
@@ -150,7 +150,8 @@ class sign_up(QWidget):
             "password": password,
             "age": age,
             "account_balance": account_balance,
-            "account_number": account_number
+            "account_number": account_number,
+            "currency": "EGP"
         }
 
         with open("users.json", "w") as f:

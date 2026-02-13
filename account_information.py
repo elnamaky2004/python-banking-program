@@ -43,6 +43,7 @@ class account_info(QWidget):
         title = user_data.get("title", "")
         age = user_data.get("age", "N/A")
         account_balance = user_data.get("account_balance", "N/A")
+        currency = user_data.get("currency", "N/A")
         account_number = user_data.get("account_number", "N/A")
 
         header = QLabel("Account Information", self)
@@ -51,7 +52,7 @@ class account_info(QWidget):
 
         name_label = QLabel(f"Name: {title} {name}".strip(), self)
         age_label = QLabel(f"Age: {age}", self)
-        balance_label = QLabel(f"Account Balance: ${account_balance}", self)
+        balance_label = QLabel(f"Account Balance: {account_balance} {currency}", self)
         account_number_label = QLabel(f"Account Number: {account_number}", self)
 
         name_label.setAlignment(Qt.AlignCenter)
