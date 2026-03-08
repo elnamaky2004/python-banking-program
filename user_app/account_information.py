@@ -1,11 +1,21 @@
 import sys
 import json
+import os
 from PyQt5.QtWidgets import (
     QWidget, QLabel, QVBoxLayout, QApplication, QPushButton,
     QHBoxLayout, QCheckBox
 )
 from PyQt5.QtCore import Qt
 import theme
+
+
+def _make_theme_switch(parent: QWidget):
+    try:
+        return theme.AnimatedToggleSwitch(parent)
+    except Exception:
+        fallback = QCheckBox(parent)
+        fallback.setCursor(Qt.PointingHandCursor)
+        return fallback
 
 
 class account_info(QWidget):
@@ -26,8 +36,8 @@ class account_info(QWidget):
         self.mode_label = QLabel(theme.theme_text(), self)
         self.mode_label.setObjectName("modeLabel")
 
-        self.mode_switch = QCheckBox(self)
-        self.mode_switch.stateChanged.connect(self.toggle_mode)
+        self.mode_switch = _make_theme_switch(self)
+        self.mode_switch.toggled.connect(self.toggle_mode)
 
         mode_row = QHBoxLayout()
         mode_row.addStretch()
@@ -35,7 +45,8 @@ class account_info(QWidget):
         mode_row.addWidget(self.mode_switch)
         mode_row.addStretch()
 
-        with open("users.json", "r") as f:
+        users_file = os.path.join(os.path.dirname(__file__), "users.json")
+        with open(users_file, "r") as f:
             users = json.load(f)
 
         user_data = users.get(self.username, {})
@@ -45,6 +56,7 @@ class account_info(QWidget):
         account_balance = user_data.get("account_balance", "N/A")
         currency = user_data.get("currency", "N/A")
         account_number = user_data.get("account_number", "N/A")
+        account_iscore = user_data.get("iscore", "N/A")
 
         header = QLabel("Account Information", self)
         header.setAlignment(Qt.AlignCenter)
@@ -54,11 +66,14 @@ class account_info(QWidget):
         age_label = QLabel(f"Age: {age}", self)
         balance_label = QLabel(f"Account Balance: {account_balance} {currency}", self)
         account_number_label = QLabel(f"Account Number: {account_number}", self)
+        account_iscore_label = QLabel(f"Account IScore: {account_iscore}", self)
 
         name_label.setAlignment(Qt.AlignCenter)
         age_label.setAlignment(Qt.AlignCenter)
         balance_label.setAlignment(Qt.AlignCenter)
         account_number_label.setAlignment(Qt.AlignCenter)
+        account_iscore_label.setAlignment(Qt.AlignCenter)
+        
 
         back_button = QPushButton("Back", self)
         back_button.setObjectName("primary")
@@ -72,8 +87,10 @@ class account_info(QWidget):
         vbox.addWidget(age_label)
         vbox.addWidget(balance_label)
         vbox.addWidget(account_number_label)
+        vbox.addWidget(account_iscore_label)
         vbox.addStretch()
         vbox.addWidget(back_button)
+
 
         self.setLayout(vbox)
 

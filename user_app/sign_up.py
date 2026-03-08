@@ -1,11 +1,21 @@
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QPushButton, QVBoxLayout, QLabel,
-    QLineEdit, QCheckBox, QHBoxLayout
+    QLineEdit, QCheckBox, QHBoxLayout , QMessageBox
 )
 from PyQt5.QtCore import Qt
 import json
+import os
 import sys
 import theme
+
+
+def _make_theme_switch(parent: QWidget):
+    try:
+        return theme.AnimatedToggleSwitch(parent)
+    except Exception:
+        fallback = QCheckBox("", parent)
+        fallback.setCursor(Qt.PointingHandCursor)
+        return fallback
 
 
 class sign_up(QWidget):
@@ -22,8 +32,7 @@ class sign_up(QWidget):
         self.mode_label = QLabel(theme.theme_text(), self)
         self.mode_label.setObjectName("modeLabel")
 
-        self.mode_switch = QCheckBox("", self)
-        self.mode_switch.setCursor(Qt.PointingHandCursor)
+        self.mode_switch = _make_theme_switch(self)
         self.mode_switch.toggled.connect(self.toggle_mode)
 
         self.name_text = QLineEdit(self)
@@ -126,8 +135,9 @@ class sign_up(QWidget):
             self.error_label.show()
             return
 
+        users_file = os.path.join(os.path.dirname(__file__), "users.json")
         try:
-            with open("users.json", "r") as f:
+            with open(users_file, "r") as f:
                 users = json.load(f)
         except Exception:
             users = {}
@@ -151,11 +161,17 @@ class sign_up(QWidget):
             "age": age,
             "account_balance": account_balance,
             "account_number": account_number,
-            "currency": "EGP"
+            "currency": "EGP",
+            "is_verified": False,
+            "iscore": 100
         }
 
-        with open("users.json", "w") as f:
+        with open(users_file, "w") as f:
             json.dump(users, f, indent=4)
+
+        QMessageBox.information(self, "Account Created",
+                                "Account creation done. Please wait until verified.",
+                                QMessageBox.Ok)
 
         from app import sign_in
         self.next_window = sign_in()

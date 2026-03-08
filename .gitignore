@@ -1,5 +1,40 @@
-users.json
+# User data files (sensitive)
+user_app/users.json
+
+# Worker data files (sensitive)
+worker_app/worker.json
+worker_app/approval_requests.json
+worker_app/loan_requests.json
+worker_app/system_logs.json
+worker_app/transfer_requests.json
+
+# Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.Python
+
+# Virtual environments
 venv/
+.venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment variables
 .env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

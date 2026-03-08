@@ -7,6 +7,15 @@ import sys
 import theme
 
 
+def _make_theme_switch(parent: QWidget):
+    try:
+        return theme.AnimatedToggleSwitch(parent)
+    except Exception:
+        fallback = QCheckBox(parent)
+        fallback.setCursor(Qt.PointingHandCursor)
+        return fallback
+
+
 class about_app(QWidget):
     def __init__(self, parent_window=None):
         super().__init__()
@@ -23,8 +32,8 @@ class about_app(QWidget):
         self.mode_label = QLabel(theme.theme_text(), self)
         self.mode_label.setObjectName("modeLabel")
 
-        self.mode_switch = QCheckBox(self)
-        self.mode_switch.stateChanged.connect(self.toggle_mode)
+        self.mode_switch = _make_theme_switch(self)
+        self.mode_switch.toggled.connect(self.toggle_mode)
 
         mode_row = QHBoxLayout()
         mode_row.addStretch()
@@ -60,7 +69,7 @@ class about_app(QWidget):
         github_label.setAlignment(Qt.AlignCenter)
         github_label.setOpenExternalLinks(True)
 
-        version_label = QLabel("Version 1.0.0", self)
+        version_label = QLabel("Version 2.0.0", self)
         version_label.setAlignment(Qt.AlignCenter)
         version_label.setObjectName("modeLabel")
 

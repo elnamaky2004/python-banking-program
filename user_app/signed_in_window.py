@@ -4,12 +4,23 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt
 import json
+import os
 import sys
 import theme
 import transfer_money
 import account_information
 import about_app
 import update_info
+import request_loan
+
+
+def _make_theme_switch(parent: QWidget):
+    try:
+        return theme.AnimatedToggleSwitch(parent)
+    except Exception:
+        fallback = QCheckBox(parent)
+        fallback.setCursor(Qt.PointingHandCursor)
+        return fallback
 
 
 class window(QWidget):
@@ -17,7 +28,8 @@ class window(QWidget):
         super().__init__()
         self.username = username
 
-        with open("users.json", "r") as f:
+        users_file = os.path.join(os.path.dirname(__file__), "users.json")
+        with open(users_file, "r") as f:
             users = json.load(f)
 
         user_data = users.get(username, {})
@@ -36,8 +48,8 @@ class window(QWidget):
         self.mode_label = QLabel(theme.theme_text(), self)
         self.mode_label.setObjectName("modeLabel")
 
-        self.mode_switch = QCheckBox(self)
-        self.mode_switch.stateChanged.connect(self.toggle_mode)
+        self.mode_switch = _make_theme_switch(self)
+        self.mode_switch.toggled.connect(self.toggle_mode)
 
         mode_row = QHBoxLayout()
         mode_row.addStretch()
@@ -58,11 +70,13 @@ class window(QWidget):
 
         transfer_button = QPushButton("Transfer Money", self)
         account_info_button = QPushButton("Account Information", self)
-        app_info_button = QPushButton("About app", self)
-        update_button = QPushButton("Update info", self)
+        loan_request_button = QPushButton("Request Loan", self)
+        app_info_button = QPushButton("About App", self)
+        update_button = QPushButton("Update Info", self)
 
         transfer_button.clicked.connect(self.transfer_money)
         account_info_button.clicked.connect(self.account_information)
+        loan_request_button.clicked.connect(self.request_loan)
         app_info_button.clicked.connect(self.open_about_app)
         update_button.clicked.connect(self.update_info)
 
@@ -72,6 +86,7 @@ class window(QWidget):
         vbox.addWidget(options_label)
         vbox.addWidget(transfer_button)
         vbox.addWidget(account_info_button)
+        vbox.addWidget(loan_request_button)
         vbox.addWidget(update_button)
         vbox.addWidget(app_info_button)
 
@@ -88,11 +103,10 @@ class window(QWidget):
         self.next_window.show()
         self.hide()
 
-    def request_money(self):
-        pass
-
     def request_loan(self):
-        pass
+        self.next_window = request_loan.RequestLoanWindow(self.username, self)
+        self.next_window.show()
+        self.hide()
 
     def open_about_app(self):
         self.next_window = about_app.about_app(self)

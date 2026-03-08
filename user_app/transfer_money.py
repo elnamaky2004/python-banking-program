@@ -1,11 +1,22 @@
 import sys
 import json
+import os
+import datetime
 from PyQt5.QtWidgets import (
     QWidget, QLabel, QVBoxLayout, QApplication, QPushButton,
     QHBoxLayout, QCheckBox, QLineEdit, QMessageBox
 )
 from PyQt5.QtCore import Qt
 import theme
+
+
+def _make_theme_switch(parent: QWidget):
+    try:
+        return theme.AnimatedToggleSwitch(parent)
+    except Exception:
+        fallback = QCheckBox(parent)
+        fallback.setCursor(Qt.PointingHandCursor)
+        return fallback
 
 
 class transfer_money(QWidget):
@@ -28,8 +39,8 @@ class transfer_money(QWidget):
         self.mode_label = QLabel(theme.theme_text(), self)
         self.mode_label.setObjectName("modeLabel")
 
-        self.mode_switch = QCheckBox(self)
-        self.mode_switch.stateChanged.connect(self.toggle_mode)
+        self.mode_switch = _make_theme_switch(self)
+        self.mode_switch.toggled.connect(self.toggle_mode)
 
         mode_row = QHBoxLayout()
         mode_row.addStretch()
@@ -81,12 +92,30 @@ class transfer_money(QWidget):
         self.close()
 
     def load_users(self):
-        with open("users.json", "r") as f:
+        users_file = os.path.join(os.path.dirname(__file__), "users.json")
+        with open(users_file, "r") as f:
             return json.load(f)
 
     def save_users(self, users):
-        with open("users.json", "w") as f:
+        users_file = os.path.join(os.path.dirname(__file__), "users.json")
+        with open(users_file, "w") as f:
             json.dump(users, f, indent=4)
+
+    def load_approval_requests(self):
+        approval_file = os.path.join(os.path.dirname(__file__), "..", "worker_app", "approval_requests.json")
+        try:
+            with open(approval_file, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            return {}
+
+    def save_approval_requests(self, requests):
+        approval_file = os.path.join(os.path.dirname(__file__), "..", "worker_app", "approval_requests.json")
+        try:
+            with open(approval_file, "w", encoding="utf-8") as f:
+                json.dump(requests, f, indent=4)
+        except Exception as e:
+            raise Exception(f"Failed to save approval requests: {e}")
 
     def to_number(self, value, default=0.0):
         try:
@@ -115,7 +144,8 @@ class transfer_money(QWidget):
     def transfer_money(self):
         recipient_acc = self.transfer_to_text.text().strip()
         amount_text = self.amount_text.text().strip()
-        with open("users.json", "r") as f:
+        users_file = os.path.join(os.path.dirname(__file__), "users.json")
+        with open(users_file, "r") as f:
             users = json.load(f)
         currency = users.get(self.username, {}).get("currency", "N/A")    
         if not recipient_acc or not amount_text:
@@ -155,6 +185,70 @@ class transfer_money(QWidget):
             QMessageBox.warning(self, "Insufficient Funds", "Insufficient funds for this transfer.")
             return
 
+        # Check if amount exceeds 5000 - requires approval
+        if amount > 5000:
+            reply = QMessageBox.question(
+                self,
+                "Approval Required",
+                f"Transfers above 5000 {currency} require worker approval.\n"
+                f"Submit this transfer request for approval?\n\n"
+                f"Amount: {amount:.2f} {currency}\n"
+                f"To Account: {recipient_acc}",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No
+            )
+
+            if reply != QMessageBox.Yes:
+                return
+
+            # Create approval request
+            try:
+                approval_requests = self.load_approval_requests()
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to load approval requests: {e}")
+                return
+
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            request_id = f"transfer_{self.username}_{timestamp.replace(' ', '_').replace(':', '-')}"
+
+            approval_request = {
+                "type": "transfer",
+                "sender_username": self.username,
+                "sender_name": sender_data.get("name", self.username),
+                "sender_account": sender_acc,
+                "recipient_account": recipient_acc,
+                "recipient_username": recipient_username,
+                "recipient_name": users[recipient_username].get("name", recipient_username),
+                "amount": amount,
+                "currency": currency,
+                "request_date": timestamp,
+                "status": "pending"
+            }
+
+            approval_requests[request_id] = approval_request
+
+            try:
+                self.save_approval_requests(approval_requests)
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to save approval request: {e}")
+                return
+
+            self.transfer_to_text.clear()
+            self.amount_text.clear()
+
+            QMessageBox.information(
+                self,
+                "Request Submitted",
+                f"Transfer request submitted successfully.\n\n"
+                f"Request ID: {request_id}\n"
+                f"Amount: {amount:.2f} {currency}\n"
+                f"To Account: {recipient_acc}\n\n"
+                f"Status: Pending Approval\n\n"
+                f"Your funds will be deducted once a worker approves this request."
+            )
+            return
+
+        # Amount <= 5000 - process immediately
         reply = QMessageBox.question(
             self,
             "Confirm Transfer",

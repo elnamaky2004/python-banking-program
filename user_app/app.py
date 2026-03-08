@@ -3,11 +3,21 @@ from PyQt5.QtWidgets import (
     QLineEdit, QCheckBox, QHBoxLayout
 )
 import sys
+import os
 from PyQt5.QtCore import Qt
 import json
 import theme
 import sign_up as signup_module
 from signed_in_window import window as SignedInWindow
+
+
+def _make_theme_switch(parent: QWidget):
+    try:
+        return theme.AnimatedToggleSwitch(parent)
+    except Exception:
+        fallback = QCheckBox("", parent)
+        fallback.setCursor(Qt.PointingHandCursor)
+        return fallback
 
 
 class sign_in(QWidget):
@@ -48,8 +58,7 @@ class sign_in(QWidget):
         self.signup_button = QPushButton("Sign Up", self)
         self.signup_button.clicked.connect(self.open_sign_up)
 
-        self.mode_button = QCheckBox("", self)
-        self.mode_button.setCursor(Qt.PointingHandCursor)
+        self.mode_button = _make_theme_switch(self)
         self.mode_button.toggled.connect(self.toggle_mode)
 
         self.error_label = QLabel("", self)
@@ -99,18 +108,23 @@ class sign_in(QWidget):
         user_name = self.username_text.text().strip()
         password = self.password_text.text().strip()
 
+        users_file = os.path.join(os.path.dirname(__file__), "users.json")
+
         try:
-            with open("users.json", "r") as f:
+            with open(users_file, "r") as f:
                 users = json.load(f)
         except Exception:
             users = {}
 
         if user_name in users and users[user_name].get("password") == password:
-            if user_name in users and users[user_name].get("password") == password:
-                self.next_window = SignedInWindow(user_name)  
-                self.next_window.show()
-                self.close()
+            if not users[user_name].get("is_verified", False):
+                self.error_label.setText("Account is not verified yet.")
+                self.error_label.show()
                 return
+            self.next_window = SignedInWindow(user_name)  
+            self.next_window.show()
+            self.close()
+            return
 
         self.error_label.setText("Invalid username or password")
         self.error_label.show()

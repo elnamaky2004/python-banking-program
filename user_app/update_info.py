@@ -1,11 +1,21 @@
 import sys
 import json
+import os
 from PyQt5.QtWidgets import (
     QWidget, QLabel, QVBoxLayout, QApplication, QPushButton,
     QHBoxLayout, QCheckBox, QLineEdit, QMessageBox
 )
 from PyQt5.QtCore import Qt
 import theme
+
+
+def _make_theme_switch(parent: QWidget):
+    try:
+        return theme.AnimatedToggleSwitch(parent)
+    except Exception:
+        fallback = QCheckBox(parent)
+        fallback.setCursor(Qt.PointingHandCursor)
+        return fallback
 
 
 class update_info(QWidget):
@@ -28,8 +38,8 @@ class update_info(QWidget):
         self.mode_label = QLabel(theme.theme_text(), self)
         self.mode_label.setObjectName("modeLabel")
 
-        self.mode_switch = QCheckBox(self)
-        self.mode_switch.stateChanged.connect(self.toggle_mode)
+        self.mode_switch = _make_theme_switch(self)
+        self.mode_switch.toggled.connect(self.toggle_mode)
 
         mode_row = QHBoxLayout()
         mode_row.addStretch()
@@ -91,11 +101,13 @@ class update_info(QWidget):
         self.mode_label.setText(theme.theme_text())
 
     def load_users(self):
-        with open("users.json", "r") as f:
+        users_file = os.path.join(os.path.dirname(__file__), "users.json")
+        with open(users_file, "r") as f:
             return json.load(f)
 
     def save_users(self, users):
-        with open("users.json", "w") as f:
+        users_file = os.path.join(os.path.dirname(__file__), "users.json")
+        with open(users_file, "w") as f:
             json.dump(users, f, indent=4)
 
     def load_current_data(self):
